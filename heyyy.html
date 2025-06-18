@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agribot Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      background-color: #f4f4f9;
+    }
+    header {
+      background-color: #4CAF50;
+      color: white;
+      padding: 1em 0;
+    }
+    main {
+      padding: 2em;
+    }
+    section {
+      margin: 1em 0;
+      background: white;
+      padding: 1em;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      display: inline-block;
+      width: 80%;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    footer {
+      margin-top: 2em;
+      background-color: #222;
+      color: white;
+      padding: 1em 0;
+    }
+    input[type="text"] {
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      width: 80%;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Agribot Dashboard</h1>
+  </header>
+  <main>
+    <!-- Status Section -->
+    <section id="status">
+      <h2>Status</h2>
+      <p>Soil Moisture: <span id="soil-moisture">Loading...</span></p>
+      <p>Temperature: <span id="temperature">Loading...</span></p>
+    </section>
+
+    <!-- Control Panel -->
+    <section id="control-panel">
+      <h2>Control Panel</h2>
+      <button onclick="sendCommand('start')">Start Watering</button>
+      <button onclick="sendCommand('stop')">Stop Watering</button>
+    </section>
+
+    <!-- User Preferences -->
+    <section id="preferences">
+      <h2>User Preferences</h2>
+      <form onsubmit="handleFormSubmit(event)">
+        <input type="text" id="user-input" placeholder="Enter your preference (e.g., moist soil)" required />
+        <button type="submit">Save Preference</button>
+      </form>
+      <p id="suggestions">Suggestions: Loading...</p>
+    </section>
+
+    <!-- Pesticide Recommendations -->
+    <section id="pesticides">
+      <h2>Pesticide Recommendations</h2>
+      <form onsubmit="handlePesticideForm(event)">
+        <input type="text" id="issue-input" placeholder="Enter crop issue (e.g., aphids, fungi)" required />
+        <button type="submit">Get Recommendation</button>
+      </form>
+      <p id="pesticide-suggestions">Pesticide Suggestions: None</p>
+    </section>
+  </main>
+  <footer>
+    <p>&copy; 2024 Agribot</p>
+  </footer>
+
+  <script>
+    // Fetch temperature and simulate soil moisture
+    function fetchSensorData() {
+      const soilMoisture = Math.random() > 0.5 ? 'Wet' : 'Dry';
+      document.getElementById('soil-moisture').innerText = soilMoisture;
+
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m')
+        .then(response => response.json())
+        .then(data => {
+          const temperature = (data.current && data.current.temperature_2m) ? data.current.temperature_2m : 'Unavailable';
+          document.getElementById('temperature').innerText = `${temperature} °C`;
+          generateSuggestions(soilMoisture, temperature);
+        })
+        .catch(error => {
+          console.error('Error fetching temperature:', error);
+          document.getElementById('temperature').innerText = 'Unavailable';
+        });
+    }
+
+    function handleFormSubmit(event) {
+      event.preventDefault();
+      const userInput = document.getElementById('user-input').value;
+      let preferences = JSON.parse(localStorage.getItem('preferences')) || [];
+      preferences.push(userInput);
+      localStorage.setItem('preferences', JSON.stringify(preferences));
+      document.getElementById('user-input').value = '';
+      alert('Preference saved!');
+    }
+
+    function generateSuggestions(soilMoisture, temperature) {
+      const preferences = JSON.parse(localStorage.getItem('preferences')) || [];
+      let suggestions = [];
+
+      if (soilMoisture === 'Dry') {
+        suggestions.push('Water the plants');
+      } else {
+        suggestions.push('No watering needed');
+      }
+
+      if (parseFloat(temperature) > 30) {
+        suggestions.push('Provide shade for crops');
+      } else {
+        suggestions.push('No shade needed');
+      }
+
+      if (preferences.length > 0) {
+        suggestions.push(`Based on your preference: ${preferences[preferences.length - 1]}`);
+      }
+
+      document.getElementById('suggestions').innerText = `Suggestions: ${suggestions.join(', ')}`;
+    }
+
+    function sendCommand(command) {
+      alert(`Command sent: ${command}`);
+    }
+
+    function handlePesticideForm(event) {
+      event.preventDefault();
+      const issue = document.getElementById('issue-input').value.toLowerCase();
+      let pesticideSuggestions = 'No suggestions available';
+
+      const pesticideDatabase = {
+        aphids: 'Use Neem Oil or Malathion',
+        fungi: 'Use Copper Fungicide or Mancozeb',
+        caterpillars: 'Use Bacillus thuringiensis (Bt) or Spinosad',
+        weeds: 'Use Glyphosate or Paraquat'
+      };
+
+      if (pesticideDatabase[issue]) {
+        pesticideSuggestions = pesticideDatabase[issue];
+      }
+
+      document.getElementById('pesticide-suggestions').innerText = `Pesticide Suggestions: ${pesticideSuggestions}`;
+      document.getElementById('issue-input').value = '';
+    }
+
+    // Fetch data initially and every 5 seconds
+    setInterval(fetchSensorData, 5000);
+    fetchSensorData();
+  </script>
+</body>
+</html>
