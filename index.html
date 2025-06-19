@@ -61,21 +61,19 @@
     <h1>Agribot Dashboard</h1>
   </header>
   <main>
-    <!-- Status Section -->
+
     <section id="status">
       <h2>Status</h2>
       <p>Soil Moisture: <span id="soil-moisture">Loading...</span></p>
       <p>Temperature: <span id="temperature">Loading...</span></p>
     </section>
 
-    <!-- Control Panel -->
     <section id="control-panel">
       <h2>Control Panel</h2>
       <button onclick="sendCommand('start')">Start Watering</button>
       <button onclick="sendCommand('stop')">Stop Watering</button>
     </section>
 
-    <!-- User Preferences -->
     <section id="preferences">
       <h2>User Preferences</h2>
       <form onsubmit="handleFormSubmit(event)">
@@ -85,7 +83,6 @@
       <p id="suggestions">Suggestions: Loading...</p>
     </section>
 
-    <!-- Pesticide Recommendations -->
     <section id="pesticides">
       <h2>Pesticide Recommendations</h2>
       <form onsubmit="handlePesticideForm(event)">
@@ -94,13 +91,23 @@
       </form>
       <p id="pesticide-suggestions">Pesticide Suggestions: None</p>
     </section>
+
+ 
+    <section id="crop-preferences">
+      <h2>Crop Preferences</h2>
+      <form onsubmit="handleCropPrefSubmit(event)">
+        <input type="text" id="crop-input" placeholder="Enter preferred crops (e.g., rice, wheat)" required />
+        <button type="submit">Save Crop Preference</button>
+      </form>
+      <p id="crop-suggestions">Crop Preferences: None saved</p>
+    </section>
   </main>
   <footer>
     <p>&copy; 2024 Agribot</p>
   </footer>
 
   <script>
-    // Fetch temperature and simulate soil moisture
+  
     function fetchSensorData() {
       const soilMoisture = Math.random() > 0.5 ? 'Wet' : 'Dry';
       document.getElementById('soil-moisture').innerText = soilMoisture;
@@ -175,9 +182,29 @@
       document.getElementById('issue-input').value = '';
     }
 
-    // Fetch data initially and every 5 seconds
+    function handleCropPrefSubmit(event) {
+      event.preventDefault();
+      const cropInput = document.getElementById('crop-input').value;
+      let crops = JSON.parse(localStorage.getItem('cropPreferences')) || [];
+      crops.push(cropInput);
+      localStorage.setItem('cropPreferences', JSON.stringify(crops));
+      document.getElementById('crop-input').value = '';
+      alert('Crop preference saved!');
+      updateCropSuggestions();
+    }
+
+    function updateCropSuggestions() {
+      const crops = JSON.parse(localStorage.getItem('cropPreferences')) || [];
+      const cropText = crops.length > 0 ? crops.join(', ') : 'None saved';
+      document.getElementById('crop-suggestions').innerText = `Crop Preferences: ${cropText}`;
+    }
+
+   
     setInterval(fetchSensorData, 5000);
     fetchSensorData();
+    updateCropSuggestions();
   </script>
 </body>
 </html>
+
+
